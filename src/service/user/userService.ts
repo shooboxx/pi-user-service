@@ -40,11 +40,7 @@ const createUser = async (user: User) => {
     _validate_user_profile_completeness(user)
     const foundUser = await getUserByEmail(user.email_address);
     if (foundUser) throw new AppError(UserErrors.UserExist, 400);
-  
-    let createdUser = await userRepo.addUser(user);
-    createdUser['password'] = undefined
-    createdUser['deleted_date'] = undefined
-    return createdUser
+    return await userRepo.addUser(user);
   
   } catch (e: any) {
     throw e;
