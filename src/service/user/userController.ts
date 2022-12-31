@@ -28,7 +28,7 @@ router.post('/users', checkNotAuthenticated, async (req: any, res: any) => {
     try {
         const newUser = await UserAuthentication.register(req.body)
         const verificationLink = `${req.headers.origin}/verify?token=${newUser.verify_token}`
-        await sendVerificationEmail({first_name: newUser.first_name, verify_link: verificationLink, email_to: newUser.email_address})
+        process.env.NODE_ENV !== 'development' && await sendVerificationEmail({first_name: newUser.first_name, verify_link: verificationLink, email_to: newUser.email_address})
 
         return res.status(200).json({first_name: newUser.first_name, verify_link: verificationLink, email_to: newUser.email_address})
     }
@@ -126,7 +126,7 @@ router.post('/user/forgot-password', checkNotAuthenticated, async (req: any, res
         if (!user?.resetToken) return res.status(200).json({})
 
         const resetPasswordLink = `${req.headers.origin}/reset-password/${user.resetToken}`
-        await sendResetEmail({first_name: user.firstName, reset_link: resetPasswordLink, email_to: user.emailAddress})
+        process.env.NODE_ENV !== 'development' && await sendResetEmail({first_name: user.firstName, reset_link: resetPasswordLink, email_to: user.emailAddress})
 
         return res.status(200).json({first_name: user.firstName, reset_link: resetPasswordLink, email_to: user.emailAddress})
     }
