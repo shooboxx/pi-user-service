@@ -1,8 +1,7 @@
 export {}
 const express = require('express');
 const router = express.Router()
-const userService = require('../user/userService')
-import { User } from "./userType";
+import {UserService} from '../user/userService'
 import { UserAuthentication } from '../auth/user/userAuthenticationService';
 const { checkNotAuthenticated, authenticateToken } = require('../auth/user/userAuthorization')
 import {sendVerificationEmail, sendResetEmail} from '../email/emailService'
@@ -16,8 +15,8 @@ router.get('/users', async (req, res) => {
     let user = {}
     const {id, email} = req.query
     try {
-        if (id) user = await userService.getUserById(id)
-        if (email) user = await userService.getUserByEmail(email)
+        if (id) user = await UserService.getUserById(id)
+        if (email) user = await UserService.getUserByEmail(email)
         return res.status(200).json(cleanUserDetails(user))
     }
     catch (e : any) {
@@ -40,7 +39,7 @@ router.post('/users', checkNotAuthenticated, async (req: any, res: any) => {
 
 router.get('/user', authenticateToken, async (req, res) => {
     try {
-        const user = await userService.getUserById(req.user_id)
+        const user = await UserService.getUserById(req.user_id)
         return res.status(200).json(cleanUserDetails(user))
     }
     catch (e : any) {
@@ -50,7 +49,7 @@ router.get('/user', authenticateToken, async (req, res) => {
 
 router.delete('/user', authenticateToken, async (req, res) => {
     try {
-        return res.status(200).json(await userService.deleteUser(req.user_id))
+        return res.status(200).json(await UserService.deleteUser(req.user_id))
     }
     catch (e : any) {
         res.status(400).json({"error": e.message})
@@ -69,7 +68,7 @@ router.put('/user', authenticateToken, async (req, res) => {
             primary_phone: req.body.primary_phone,
             state: req.body.state,
         }
-        const updatedUser = await userService.updateUserProfile(cleanUserDetails(user))
+        const updatedUser = await UserService.updateUserProfile(cleanUserDetails(user))
         return res.status(200).json(updatedUser)
     }
     catch (e : any) {
@@ -79,7 +78,7 @@ router.put('/user', authenticateToken, async (req, res) => {
 
 router.get('/user/verify', async (req: any, res: any) => {
     try {
-        const verified : User = await userService.verifyUser(req.query.token)
+        const verified = await UserService.verifyUser(req.query.token)
         if (verified) return res.status(200).json({success: true})
     }
     catch (err : any){
@@ -92,7 +91,7 @@ router.post('/user/login', checkNotAuthenticated, async (req, res) => {
     try {
 
         const user = await UserAuthentication.login(req.body.email_address, req.body.password)
-        await userService.storeRefreshToken(user.id, user.hashed_refresh_token).catch((e)=> {throw e})
+        await UserService.storeRefreshToken(user.id, user.hashed_refresh_token).catch((e)=> {throw e})
         res.cookie("access_token", user.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV == 'production' ? true : false,
@@ -168,7 +167,7 @@ router.put('/user/change-password', authenticateToken, async (req, res) => {
     const newPasswordConfirm = req.body.new_password_confirm
     if ((currentPassword === newPassword) || (currentPassword === newPasswordConfirm) ) return res.json({ success: true })
     
-    const foundUser = await userService.getUserById(req.user_id)
+    const foundUser = await UserService.getUserById(req.user_id)
     const user = await UserAuthentication.login(foundUser.email_address, currentPassword)
     await UserAuthentication.changePassword(user.id, newPassword, newPasswordConfirm)
     return res.json({ success: true })

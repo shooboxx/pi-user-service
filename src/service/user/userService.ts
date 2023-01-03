@@ -109,7 +109,7 @@ const _validate_user_profile_completeness = (user) => {
   return true
 }
 
-module.exports = {
+export const UserService = {
   getUserByEmail,
   getUserById,
   createUser,

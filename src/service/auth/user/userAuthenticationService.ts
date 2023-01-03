@@ -1,4 +1,4 @@
-const userService = require('../../user/userService')
+import {UserService} from '../../user/userService'
 import { User } from "./../../user/userType";
 import AppError from "../../../utils/appError.js";
 import { AuthErrors } from "./authConst";
@@ -8,7 +8,7 @@ const crypto = require('crypto')
 const systemRoleService = require('./systemRole/systemRoleService')
 
 const login = async (emailAddress: string, password : string) => {
-    const user : User = await userService.getUserByEmail(emailAddress)
+    const user : User = await UserService.getUserByEmail(emailAddress)
     if (!user) throw new AppError(AuthErrors.IncorrectLogin, 400)
     
     const passwordsMatched = await bcrypt.compare(password, user.password) 
@@ -42,11 +42,11 @@ const register = async (user) : Promise<User>=> {
         verify_token: crypto.randomBytes(32).toString('hex')
 
     }
-    return await userService.createUser(buildUser)
+    return await UserService.createUser(buildUser)
 }
 
 const forgotPasswordRequest = async (emailAddress : string) => {
-    let user: User = await userService.getUserByEmail(emailAddress)
+    let user: User = await UserService.getUserByEmail(emailAddress)
     if (!user) return {id: 0, firstName: '', emailAddress: '', resetToken: '', userResetTokenExpiry: null}
 
     const resetExpiryTime = new Date().getTime() + 10 * 60000
@@ -55,26 +55,26 @@ const forgotPasswordRequest = async (emailAddress : string) => {
     const hashedResetToken = _hashToken(resetToken)
     const userResetTokenExpiry = new Date(resetExpiryTime);
 
-    userService.updateResetToken(user.id, hashedResetToken, userResetTokenExpiry);
+    UserService.updateResetToken(user.id, hashedResetToken, userResetTokenExpiry);
     return {id: user.id, firstName: user.first_name, emailAddress: user.email_address, resetToken, userResetTokenExpiry}
 }
 
 const resetPassword = async (resetToken : string, newPassword : string, newPasswordConfirm : string) => {
     const hashedResetToken = _hashToken(resetToken)
-    const user: User = await userService.getUserByResetToken(hashedResetToken)
+    const user: User = await UserService.getUserByResetToken(hashedResetToken)
 
     if (!user) throw new AppError(AuthErrors.BadResetToken, 400)
 
     if (user.reset_expires! < new Date()) {
         throw new AppError(AuthErrors.TokenExpired, 401)
     }
-    await userService.updatePassword(user.id, newPassword, newPasswordConfirm)
-    await userService.updateResetToken(user.id, null, null)
+    await UserService.updatePassword(user.id, newPassword, newPasswordConfirm)
+    await UserService.updateResetToken(user.id, '', null)
     return true
 }
 
 const changePassword = async (userId : number, newPassword : string, newPasswordConfirm : string) => {
-    await userService.updatePassword(userId, newPassword, newPasswordConfirm).catch(err => {throw err})
+    await UserService.updatePassword(userId, newPassword, newPasswordConfirm).catch(err => {throw err})
     return true
 }
 
@@ -83,7 +83,7 @@ const refreshAccessToken = async (refreshToken : string) : Promise<String>=> {
     if (!refreshToken) return accessToken
     
     const hashedToken = _hashToken(refreshToken) 
-    const token = await userService.findRefreshToken(hashedToken).catch( err => { throw err })
+    const token = await UserService.findRefreshToken(hashedToken).catch( err => { throw err })
     
     if (!token) return accessToken
 
@@ -97,7 +97,7 @@ const refreshAccessToken = async (refreshToken : string) : Promise<String>=> {
 const logout = async (refreshToken : string) => {
     if (!refreshToken) return true
     const hashedToken = _hashToken(refreshToken)
-    await userService.deleteRefreshToken(hashedToken)
+    await UserService.deleteRefreshToken(hashedToken)
     return true
 }
 
@@ -113,6 +113,7 @@ const _hashToken = (token : string) => {
     return crypto.createHash('sha256').update(token).digest('hex')
 }
 
+
 export const UserAuthentication = {
     login,
     register, 
@@ -120,5 +121,5 @@ export const UserAuthentication = {
     resetPassword,
     refreshAccessToken,
     logout,
-    changePassword
+    changePassword,
 }
