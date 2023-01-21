@@ -2,7 +2,7 @@ export {};
 import db from "../../models";
 import { User } from "./userType";
 const { Op } = require("sequelize");
-// TODO: Create a CreateUser interface for a minimized object
+
 const addUser = async (user: User) => {
   const {dataValues} = await db.Users.create({
     email_address: user.email_address,
@@ -73,6 +73,21 @@ const updateUser = async (user: User) => {
   return user;
 };
 
+const deleteUser = async (user: User) => {
+  await db.Users.update(
+    {
+      deleted_date: user.deleted_date
+    },
+    {
+      where: {
+        id: user.id,
+        deleted_date: null
+      },
+    }
+  );
+  return user;
+};
+
 const storeRefreshToken = async (user_id: number, refreshToken: string) => {
   const { dataValues } = await db.UserTokens.create({
     user_id: user_id,
@@ -129,10 +144,7 @@ const updateUserResetToken = async (userId : number, resetToken : string, resetT
   })
 }
 
-
-
-//TODO: Update user password
-// TODO: Delete user account
+// TODO: Create a function that hard delete user accounts
 //TODO: Create reset token + reset expiry
 
 module.exports = {
@@ -146,5 +158,6 @@ module.exports = {
   clearRefreshTokens,
   deleteRefreshToken,
   updateUserPassword,
-  updateUserResetToken
+  updateUserResetToken,
+  deleteUser
 };

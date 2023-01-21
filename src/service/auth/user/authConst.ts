@@ -4,5 +4,6 @@ export const AuthErrors = {
     IncorrectLogin: 'Email address or password is incorrect',
     LoginRequired: 'User login is required',
     InvalidToken: 'Token invalid or expired',
-    AlreadyLoggedIn: 'You are currently logged in and unable to do this request. You can logout and try again'
+    AlreadyLoggedIn: 'You are currently logged in and unable to do this request. You can logout and try again',
+    PasswordRequired: "Password cannot be empty",
 }

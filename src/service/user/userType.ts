@@ -8,7 +8,7 @@ export interface User {
     dob: string,
     gender?: string,
     profile_picture_url?: string,
-    country?: string,
+    country: string,
     city?: string,
     primary_phone?: string,
     state?: string,

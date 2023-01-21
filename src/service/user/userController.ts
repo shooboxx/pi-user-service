@@ -122,10 +122,8 @@ router.delete('/user/logout', async (req: any, res: any) => {
 router.post('/user/forgot-password', checkNotAuthenticated, async (req: any, res: any) => {
     try {
         const user = await UserAuthentication.forgotPasswordRequest(req.body.email_address)
-        if (!user?.resetToken) return res.status(200).json({})
-
         const resetPasswordLink = `${req.headers.origin}/reset-password/${user.resetToken}`
-        process.env.NODE_ENV !== 'development' && await sendResetEmail({first_name: user.firstName, reset_link: resetPasswordLink, email_to: user.emailAddress})
+        if (process.env.NODE_ENV !== 'development' && user.emailAddress) await sendResetEmail({first_name: user.firstName, reset_link: resetPasswordLink, email_to: user.emailAddress})
 
         return res.status(200).json({first_name: user.firstName, reset_link: resetPasswordLink, email_to: user.emailAddress})
     }

@@ -1,6 +1,7 @@
 export const UserErrors = {
    UserIdRequired: "user_id is required",
    EmailAddressRequired: "email address is required",
+   EmailAddressInvalid: "Not a proper email address",
    PasswordRequired: "password is required",
    UserNotFound: 'User not found',
    VerificationTokenRequired: 'Verification token is required',
@@ -15,5 +16,11 @@ export const UserErrors = {
    LastNameRequired: 'last_name is required',
    GenderRequired: 'gender is required',
    DOBRequired: 'dob is required',
-   AgeMinimumRequirement: "You must be at least 15 years old."
+   AgeMinimumRequirement: "You must be at least 15 years old.",
+   GenderNotListed: "Not currently a valid gender",
+   CountryRequired: "country is required",
+   InvalidCountry: "Not a valid country at the moment",
+   FirstNameMinRequirement: "First name must have at least 2 characters",
+   LastNameMinRequirement: "Last name must have at least 2 characters",
+   PasswordComplexityRequirement: "Password must be at least 8 characters long"
 }

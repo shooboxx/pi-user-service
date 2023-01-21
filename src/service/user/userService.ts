@@ -1,9 +1,13 @@
 import { User } from "./userType";
 import AppError from "../../utils/appError.js";
+import cleanPhoneNumber from "../../utils/cleanPhoneNumber.js";
 const bcrypt = require("bcrypt");
 const userRepo = require("./userRepo");
 import { UserErrors } from "./userConst";
 import getCurrentAge from "../../utils/getCurrentAge"
+import {Genders} from './enums/gender'
+let emailValidator = require("email-validator");
+const {getName} = require('country-list');
 
 const getUserByEmail = async (emailAddress: string) => {
   if (!emailAddress) throw new AppError(UserErrors.EmailAddressRequired, 400);
@@ -46,9 +50,20 @@ const createUser = async (user: User) => {
     throw e;
   }
 };
-
+ 
 const updateUserProfile = async (user: User) => {
+  try {
+    if (user.primary_phone) user.primary_phone = cleanPhoneNumber(user.primary_phone)
+    if (user.dob && getCurrentAge(user.dob) < 15) throw new AppError(UserErrors.AgeMinimumRequirement, 400)
+    if (user.gender && !Genders[user.gender]) throw new AppError(UserErrors.GenderNotListed)
+    if (user.country && !getName(user.country.toUpperCase().trim())) throw new AppError(UserErrors.InvalidCountry)
+    user.country = getName(user.country.toUpperCase().trim())
     return await userRepo.updateUser(user).catch(err => {throw err});
+  }
+  catch (e : any) {
+    throw new AppError(e.message, e.statusCode)
+  }
+
 };
 
 const updateResetToken = async (userId : number, resetToken : string, resetTokenExpiry : Date | null) => {
@@ -57,7 +72,7 @@ const updateResetToken = async (userId : number, resetToken : string, resetToken
 
 const updatePassword = async (userId : number, newPassword : string ,newPasswordConfirm : string) => {
   if (newPassword !== newPasswordConfirm) throw new AppError(UserErrors.PasswordsMismatch, 400);
-
+  if (newPassword.length < 8) throw new AppError(UserErrors.PasswordComplexityRequirement, 400)
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   const updatedUser = userRepo.updateUserPassword(userId, hashedPassword).catch(err => { throw err  })
   if (updatedUser) userRepo.clearRefreshTokens(userId).catch(err => { throw err });
@@ -79,7 +94,7 @@ const deleteUser = async (userId: number) => {
     const user : User = await getUserById(userId);
 
     user.deleted_date = new Date();
-    await userRepo.updateUser(user).catch( err => {throw err});
+    await userRepo.deleteUser(user).catch( err => {throw err});
     return true
 };
 
@@ -99,13 +114,18 @@ const deleteRefreshToken = async(token) => {
 
 const _validate_user_profile_completeness = (user) => {
   if (!user.email_address) throw new AppError(UserErrors.EmailAddressRequired, 400);
+  if (!emailValidator.validate(user.email_address.toLowerCase().trim())) throw new AppError(UserErrors.EmailAddressInvalid, 400)
   if (!user.password) throw new AppError(UserErrors.PasswordRequired, 400);
   if (!user.first_name) throw new AppError(UserErrors.FirstNameRequired, 400)
+  if (user.first_name.trim().length < 2) throw new AppError(UserErrors.FirstNameMinRequirement, 400)
   if (!user.last_name) throw new AppError(UserErrors.LastNameRequired, 400)
+  if (user.last_name.trim().length < 2) throw new AppError(UserErrors.LastNameMinRequirement, 400)
   if (!user.gender) throw new AppError(UserErrors.GenderRequired, 400)
+  if (!Genders[user.gender]) throw new AppError(UserErrors.GenderNotListed)
   if (!user.dob) throw new AppError(UserErrors.DOBRequired, 400)
-  if (getCurrentAge(user.dob) < 15) throw new AppError(UserErrors.AgeMinimumRequirement, 400) //TODO: Test this new feature
-
+  if (getCurrentAge(user.dob) < 15) throw new AppError(UserErrors.AgeMinimumRequirement, 400)
+  if (!user.country) throw new AppError(UserErrors.CountryRequired, 400)
+  if (user.country && !getName(user.country.toUpperCase().trim())) throw new AppError(UserErrors.InvalidCountry, 400)
   return true
 }
 

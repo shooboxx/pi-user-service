@@ -1,13 +1,16 @@
 import {UserService} from '../../user/userService'
 import { User } from "./../../user/userType";
 import AppError from "../../../utils/appError.js";
+import cleanPhoneNumber from "../../../utils/cleanPhoneNumber.js";
 import { AuthErrors } from "./authConst";
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const systemRoleService = require('./systemRole/systemRoleService')
+import { UserErrors } from "../../user/userConst";
 
 const login = async (emailAddress: string, password : string) => {
+    if (!password) throw new AppError(AuthErrors.PasswordRequired)
     const user : User = await UserService.getUserByEmail(emailAddress)
     if (!user) throw new AppError(AuthErrors.IncorrectLogin, 400)
     
@@ -22,8 +25,9 @@ const login = async (emailAddress: string, password : string) => {
 
 }
 
-const register = async (user) : Promise<User>=> {
-    const hashedPass = await _generatePasswordHash(user['password'])
+const register = async (user : User)  : Promise<User>=> {
+    if (user.password.length < 8) throw new AppError(UserErrors.PasswordComplexityRequirement, 400);
+    const hashedPass = await _generatePasswordHash(user.password)
     const buildUser: User = {
         id: 1,
         role_id: await systemRoleService.getRoleId('USER'),
@@ -35,7 +39,7 @@ const register = async (user) : Promise<User>=> {
         state: user.state,
         city: user.city,
         country: user.country,
-        primary_phone: user.primary_phone,
+        primary_phone: cleanPhoneNumber(user.primary_phone),
         gender: user.gender,
         active: true,
         is_verified: false,
