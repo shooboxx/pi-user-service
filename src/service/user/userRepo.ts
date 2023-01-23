@@ -145,7 +145,6 @@ const updateUserResetToken = async (userId : number, resetToken : string, resetT
 }
 
 // TODO: Create a function that hard delete user accounts
-//TODO: Create reset token + reset expiry
 
 module.exports = {
   addUser,

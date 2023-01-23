@@ -135,8 +135,8 @@ router.post('/user/forgot-password', checkNotAuthenticated, async (req: any, res
 
 router.post('/user/reset-password/:resetToken', checkNotAuthenticated, async (req: any, res: any) => {
     try {
-        UserAuthentication.resetPassword(req.params.resetToken, req.body.password, req.body.password_confirm)
-        return res.status(200).send({success: true})
+        const didReset = await UserAuthentication.resetPassword(req.params.resetToken, req.body.password, req.body.password_confirm)
+        return res.status(200).send({success: didReset})
     }
     catch (e: any) {
         return res.status(400).send(e.message)

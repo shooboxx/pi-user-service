@@ -34,7 +34,7 @@ const getUserByVerificationToken = async (token: string) => {
 
 const getUserByResetToken = (resetToken: string): User => {
   if (!resetToken) throw new AppError(UserErrors.ResetTokenRequired, 400);
-  const user = userRepo.findUserByResetToken(resetToken);
+  const user : User = userRepo.findUserByResetToken(resetToken);
   if (!user) throw new AppError(UserErrors.UserNotFound, 404);
   return user;
 };

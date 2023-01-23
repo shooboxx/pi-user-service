@@ -52,24 +52,19 @@ const register = async (user : User)  : Promise<User>=> {
 const forgotPasswordRequest = async (emailAddress : string) => {
     let user: User = await UserService.getUserByEmail(emailAddress)
     if (!user) return {id: 0, firstName: '', emailAddress: '', resetToken: '', userResetTokenExpiry: null}
-
     const resetExpiryTime = new Date().getTime() + 10 * 60000
-
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedResetToken = _hashToken(resetToken)
-    const userResetTokenExpiry = new Date(resetExpiryTime);
 
-    UserService.updateResetToken(user.id, hashedResetToken, userResetTokenExpiry);
-    return {id: user.id, firstName: user.first_name, emailAddress: user.email_address, resetToken, userResetTokenExpiry}
+    await UserService.updateResetToken(user.id, hashedResetToken, new Date(resetExpiryTime));
+    return {id: user.id, firstName: user.first_name, emailAddress: user.email_address, resetToken, resetExpiryTime}
 }
 
 const resetPassword = async (resetToken : string, newPassword : string, newPasswordConfirm : string) => {
     const hashedResetToken = _hashToken(resetToken)
     const user: User = await UserService.getUserByResetToken(hashedResetToken)
-
     if (!user) throw new AppError(AuthErrors.BadResetToken, 400)
-
-    if (user.reset_expires! < new Date()) {
+    if (user.reset_expires && new Date(user.reset_expires).getTime() < new Date().getTime()) {
         throw new AppError(AuthErrors.TokenExpired, 401)
     }
     await UserService.updatePassword(user.id, newPassword, newPasswordConfirm)
